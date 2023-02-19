@@ -1,21 +1,40 @@
-const grid = document.querySelector('.grid');
+let grid = document.querySelector('.grid');
 const btnReset = document.querySelector('.btn-reset');
 const btnChange = document.querySelector('.btn-change')
 
-for (let i = 0; i < 256; i++) {
-    let div = document.createElement('div');
-    div.className = 'cell';
-    grid.appendChild(div);
+
+
+function makeGrid(x)
+{
+    grid.style.setProperty('--grid-rows', x);
+    grid.style.setProperty('--cell-size', `${800/x}px`);
+    grid.replaceChildren();
+    for (let i = 0; i < x*x; i++) {
+        let cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.style.setProperty('--color-var', 'white');
+        grid.appendChild(cell);
+    }
+    document.body.appendChild(grid);
 }
-
-
+makeGrid(16);
 
 grid.addEventListener(
     "mouseover",
     e => {
         if (e.target && e.target.matches('.cell')) {
             const hoveredDiv = e.target;
-            hoveredDiv.style.backgroundColor = '#000000';
+            if(hoveredDiv.style.backgroundColor == '' || hoveredDiv.style.backgroundColor == 'white')
+            {
+                console.log(hoveredDiv.style.backgroundColor);
+                hoveredDiv.style.backgroundColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+                console.log(hoveredDiv.style.backgroundColor);
+            }
+            else
+            {
+                console.log(rgb2hex(hoveredDiv.style.backgroundColor));
+                hoveredDiv.style.backgroundColor = newShade(rgb2hex(hoveredDiv.style.backgroundColor), -10);
+            }
         }
     });
 
@@ -27,22 +46,31 @@ btnReset.addEventListener(
         }
     });
 
+
 btnChange.addEventListener(
     'click', e => {
-        const x = prompt('how many rows: ');
-        const y = prompt('how many columns: ');
-        resizeGrid(x, y);
+        const x = prompt('how many squares per side: ');
+        makeGrid(x);
     }
 )
 
-function resizeGrid(x, y) {
-    const columns = `repeat(${x}, 1fr)`;
-    const rows = `repeat(${y}, 1fr)`;
-    grid.remove();
-    grid.style.gridTemplateColumns = columns;
-    grid.style.gridTemplateRows = rows;
-    const newGrid = document.createElement('div');
-    newGrid.className = 'grid';
-    newGrid.style.cssText = `display: grid;grid-template-columns: repeat(${x}, 1fr);grid-template-rows: repeat(${y}, 1fr);justify-content: center;align-content: center;height: 90vh;`;
-    document.body.appendChild(newGrid);
-}
+const rgb2hex = (rgb) => `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/).slice(1).map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('')}`;
+
+const newShade = (hexColor, magnitude) => {
+    hexColor = hexColor.replace(`#`, ``);
+    if (hexColor.length === 6) {
+        const decimalColor = parseInt(hexColor, 16);
+        let r = (decimalColor >> 16) + magnitude;
+        r > 255 && (r = 255);
+        r < 0 && (r = 0);
+        let g = (decimalColor & 0x0000ff) + magnitude;
+        g > 255 && (g = 255);
+        g < 0 && (g = 0);
+        let b = ((decimalColor >> 8) & 0x00ff) + magnitude;
+        b > 255 && (b = 255);
+        b < 0 && (b = 0);
+        return `#${(g | (b << 8) | (r << 16)).toString(16)}`;
+    } else {
+        return hexColor;
+    }
+};
